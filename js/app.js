@@ -192,7 +192,7 @@ function startClock() {
   clockInterval = setInterval(tick, 1000);
 }
 
-/* ── Tab switching ────────────────────────────────────────────── */
+/* ── Left panel tab switching ────────────────────────────────── */
 function initTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -217,6 +217,26 @@ function initTabs() {
     });
   });
 }
+
+/* ── Right panel tab switching ───────────────────────────────── */
+function initRightTabs() {
+  document.querySelectorAll('.right-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchRightTab(btn.dataset.rightTab));
+  });
+}
+
+window.switchRightTab = function switchRightTab(tabName) {
+  document.querySelectorAll('.right-tab-btn').forEach(b => {
+    const active = b.dataset.rightTab === tabName;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', active);
+  });
+  document.querySelectorAll('.right-tab-content').forEach(c => {
+    const active = c.id === 'right-tab-' + tabName;
+    c.classList.toggle('hidden', !active);
+    c.classList.toggle('active', active);
+  });
+};
 
 /* ── Timezone switcher (in-app) ──────────────────────────────── */
 function initTimezoneSwitcher() {
@@ -485,6 +505,7 @@ function showLoginError(msg) {
 async function init() {
   // Wire up tabs and in-app timezone switcher
   initTabs();
+  initRightTabs();
   initTimezoneSwitcher();
 
   // Sign-out button

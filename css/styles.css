@@ -513,6 +513,115 @@ ul {
   overflow: hidden;
 }
 
+/* ── Right Panel Tab Navigation ─────────────────────────────── */
+.right-tab-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  padding: 0 2rem;
+  gap: 0.25rem;
+}
+
+.right-tab-btn {
+  padding: 0.65rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+  margin-bottom: -1px;
+}
+
+.right-tab-btn:hover {
+  color: var(--text-secondary);
+}
+
+.right-tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ── Right Panel Tab Content ─────────────────────────────────── */
+.right-tab-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-tab-content.hidden {
+  display: none;
+}
+
+/* ── Contact Card ────────────────────────────────────────────── */
+.contact-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.contact-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.contact-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.contact-role {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.contact-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 0.5rem;
+  transition: color var(--transition);
+}
+
+.contact-email:hover {
+  color: var(--accent-hover);
+}
+
+.contact-email svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 /* ── Right Header (clock + controls) ────────────────────────── */
 .right-header {
   display: flex;
@@ -593,7 +702,6 @@ ul {
 /* ── Session Detail (right panel body) ──────────────────────── */
 .session-detail {
   flex: 1;
-  overflow-y: auto;
   padding: 2rem;
 }
 

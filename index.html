@@ -71,11 +71,8 @@
         <button class="tab-btn active" data-tab="how-it-works" role="tab" aria-selected="true">
           How It Works
         </button>
-        <button class="tab-btn" data-tab="upcoming" role="tab" aria-selected="false">
-          Upcoming
-        </button>
-        <button class="tab-btn" data-tab="archive" role="tab" aria-selected="false">
-          Archive
+        <button class="tab-btn" data-tab="contact" role="tab" aria-selected="false">
+          Contact
         </button>
       </nav>
 
@@ -120,21 +117,26 @@
         </div>
       </div>
 
-      <!-- Tab: Upcoming Sessions -->
-      <div id="tab-upcoming" class="tab-content hidden" role="tabpanel">
+      <!-- Tab: Contact -->
+      <div id="tab-contact" class="tab-content hidden" role="tabpanel">
         <div class="tab-inner">
-          <h2 class="tab-heading">Upcoming Sessions</h2>
-          <p class="tab-text muted" id="upcoming-empty" style="display:none">No upcoming sessions scheduled.</p>
-          <ul id="upcoming-list" class="session-list"></ul>
-        </div>
-      </div>
-
-      <!-- Tab: Archive -->
-      <div id="tab-archive" class="tab-content hidden" role="tabpanel">
-        <div class="tab-inner">
-          <h2 class="tab-heading">Past Sessions</h2>
-          <p class="tab-text muted" id="archive-empty" style="display:none">No past sessions yet.</p>
-          <ul id="archive-list" class="session-list"></ul>
+          <h2 class="tab-heading">Contact</h2>
+          <p class="tab-text">
+            Have a question about the DSM 2026 program? Reach out directly.
+          </p>
+          <div class="contact-card">
+            <div class="contact-avatar">V</div>
+            <div class="contact-info">
+              <div class="contact-name">Vidita</div>
+              <div class="contact-role">DSM Program Lead</div>
+              <a href="mailto:support@email.com" class="contact-email">
+                <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+                  <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/>
+                </svg>
+                support@email.com
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -156,59 +158,92 @@
         </div>
       </header>
 
-      <!-- Session detail card -->
-      <section id="session-detail" class="session-detail">
+      <!-- Right panel tab navigation -->
+      <nav class="right-tab-nav" role="tablist">
+        <button class="right-tab-btn active" data-right-tab="session" role="tab" aria-selected="true">
+          Session
+        </button>
+        <button class="right-tab-btn" data-right-tab="upcoming" role="tab" aria-selected="false">
+          Upcoming
+        </button>
+        <button class="right-tab-btn" data-right-tab="archive" role="tab" aria-selected="false">
+          Archive
+        </button>
+      </nav>
 
-        <!-- Loading state -->
-        <div id="session-loading" class="session-loading">
-          <div class="spinner"></div>
-          <p>Loading schedule…</p>
-        </div>
+      <!-- Right tab: Session detail -->
+      <div id="right-tab-session" class="right-tab-content active">
+        <section id="session-detail" class="session-detail">
 
-        <!-- Session content (hidden while loading) -->
-        <div id="session-content" class="hidden">
-          <div class="session-meta-top">
-            <span id="session-status-badge" class="status-badge"></span>
-            <span id="session-tags" class="session-tags"></span>
+          <!-- Loading state -->
+          <div id="session-loading" class="session-loading">
+            <div class="spinner"></div>
+            <p>Loading schedule…</p>
           </div>
 
-          <h1 id="session-topic" class="session-topic">—</h1>
-          <p id="session-description" class="session-description"></p>
+          <!-- Session content (hidden while loading) -->
+          <div id="session-content" class="hidden">
+            <div class="session-meta-top">
+              <span id="session-status-badge" class="status-badge"></span>
+              <span id="session-tags" class="session-tags"></span>
+            </div>
 
-          <ul id="session-bullets" class="session-bullets"></ul>
+            <h1 id="session-topic" class="session-topic">—</h1>
+            <p id="session-description" class="session-description"></p>
 
-          <div class="session-info-grid">
-            <div class="info-row">
-              <span class="info-label">Date</span>
-              <span id="info-date" class="info-value"></span>
+            <ul id="session-bullets" class="session-bullets"></ul>
+
+            <div class="session-info-grid">
+              <div class="info-row">
+                <span class="info-label">Date</span>
+                <span id="info-date" class="info-value"></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Time</span>
+                <span id="info-time" class="info-value"></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Duration</span>
+                <span id="info-duration" class="info-value"></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Host</span>
+                <span id="info-host" class="info-value"></span>
+              </div>
             </div>
-            <div class="info-row">
-              <span class="info-label">Time</span>
-              <span id="info-time" class="info-value"></span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Duration</span>
-              <span id="info-duration" class="info-value"></span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Host</span>
-              <span id="info-host" class="info-value"></span>
+
+            <div id="session-cta" class="session-cta hidden">
+              <a id="meeting-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-join">
+                Join Session →
+              </a>
             </div>
           </div>
 
-          <div id="session-cta" class="session-cta hidden">
-            <a id="meeting-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-join">
-              Join Session →
-            </a>
+          <!-- Empty state (no sessions at all) -->
+          <div id="session-empty" class="session-empty hidden">
+            <p>No sessions found. Please check back later.</p>
           </div>
-        </div>
 
-        <!-- Empty state (no sessions at all) -->
-        <div id="session-empty" class="session-empty hidden">
-          <p>No sessions found. Please check back later.</p>
-        </div>
+        </section>
+      </div>
 
-      </section>
+      <!-- Right tab: Upcoming Sessions -->
+      <div id="right-tab-upcoming" class="right-tab-content hidden">
+        <div class="tab-inner">
+          <h2 class="tab-heading">Upcoming Sessions</h2>
+          <p class="tab-text muted" id="upcoming-empty" style="display:none">No upcoming sessions scheduled.</p>
+          <ul id="upcoming-list" class="session-list"></ul>
+        </div>
+      </div>
+
+      <!-- Right tab: Archive -->
+      <div id="right-tab-archive" class="right-tab-content hidden">
+        <div class="tab-inner">
+          <h2 class="tab-heading">Past Sessions</h2>
+          <p class="tab-text muted" id="archive-empty" style="display:none">No past sessions yet.</p>
+          <ul id="archive-list" class="session-list"></ul>
+        </div>
+      </div>
 
     </main>
 

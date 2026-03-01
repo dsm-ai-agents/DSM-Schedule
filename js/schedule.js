@@ -302,7 +302,10 @@ function attachListItemListeners(listEl) {
   listEl.querySelectorAll('.session-list-item').forEach(item => {
     item.addEventListener('click', () => {
       const session = AppState.schedule.find(s => s.id === item.dataset.id);
-      if (session) renderSessionDetail(session);
+      if (session) {
+        renderSessionDetail(session);
+        if (window.switchRightTab) window.switchRightTab('session');
+      }
     });
   });
 }
