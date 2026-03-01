@@ -133,7 +133,11 @@ async function loadSchedule(accessToken) {
   }
 
   const sessions = rawRows
-    .filter(row => (row.display_schedule || '').trim().toLowerCase() === 'yes')
+    .filter(row => {
+      const val = (row.display_schedule || '').trim().toLowerCase();
+      // "yes" = show; empty/absent = show (covers fallback JSON); anything else = hide
+      return val === 'yes' || val === '';
+    })
     .map(normalizeSession)
     .filter(Boolean)
     .sort((a, b) => a.startUTC - b.startUTC);
