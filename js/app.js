@@ -242,8 +242,10 @@ function refreshAllTimezoneDisplays() {
 /* ── PKCE helpers ─────────────────────────────────────────────── */
 
 function getCurrentRedirectUri() {
-  const origin = window.location.origin;
-  return REDIRECT_URIS.find(uri => uri.startsWith(origin)) || REDIRECT_URIS[0];
+  // Always use the current page's origin — works for any deployment URL
+  // without needing to enumerate every possible domain in REDIRECT_URIS.
+  // Just register the actual URL in Google Cloud Console.
+  return window.location.origin;
 }
 
 function base64urlEncode(buffer) {
