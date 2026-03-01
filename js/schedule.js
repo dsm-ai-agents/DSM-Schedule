@@ -63,48 +63,51 @@ async function fetchFallback() {
   return json.sessions || [];
 }
 
+/* ── IST → UTC conversion ─────────────────────────────────────
+   The sheet stores times in IST (UTC+5:30).
+   We treat the value as IST and subtract 5h30m to get UTC.
+──────────────────────────────────────────────────────────── */
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+
+function istToUtc(dateStr, istTimeStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hour, minute]     = istTimeStr.split(':').map(Number);
+  // Treat as UTC first, then subtract the IST offset
+  return new Date(Date.UTC(year, month - 1, day, hour || 0, minute || 0) - IST_OFFSET_MS);
+}
+
 /* ── Normalize a raw row object to a session ─────────────────
-   All dates are stored as UTC Date objects internally.
+   All dates stored as UTC Date objects internally.
    Never store timezone-adjusted values — convert at render time.
+   Rows with display_schedule !== "Yes" are excluded upstream.
 ──────────────────────────────────────────────────────────── */
 function normalizeSession(raw) {
-  // Parse date + time_utc into a UTC Date object
-  const dateStr = (raw.date || '').trim();
-  const timeStr = (raw.time_utc || '00:00').trim();
+  const dateStr     = (raw.date     || '').trim();
+  const timeStr     = (raw.time_utc || '00:00').trim();
   const durationMin = parseInt(raw.duration_min || '60', 10);
 
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const [hour, minute] = timeStr.split(':').map(Number);
-
-  if (!year || isNaN(month) || isNaN(day)) {
-    return null; // skip malformed rows
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return null; // skip malformed / empty rows
   }
 
-  const startUTC = new Date(Date.UTC(year, month - 1, day, hour || 0, minute || 0));
-  const endUTC = new Date(startUTC.getTime() + durationMin * 60 * 1000);
+  const startUTC = istToUtc(dateStr, timeStr);
+  const endUTC   = new Date(startUTC.getTime() + durationMin * 60 * 1000);
 
-  const bullets = [
-    raw.bullet_1,
-    raw.bullet_2,
-    raw.bullet_3,
-    raw.bullet_4,
-  ].filter(b => b && b.trim());
-
-  const tags = raw.tags
-    ? raw.tags.split(',').map(t => t.trim()).filter(Boolean)
-    : [];
+  const bullets = [raw.bullet_1, raw.bullet_2, raw.bullet_3]
+    .filter(b => b && b.trim());
 
   return {
-    id: `${dateStr}-${timeStr.replace(':', '')}`,
+    id:          `${dateStr}-${timeStr.replace(':', '')}`,
     startUTC,
     endUTC,
     durationMin,
-    topic: raw.topic || 'Untitled Session',
+    topic:       raw.topic       || 'Untitled Session',
     description: raw.description || '',
     bullets,
-    host: raw.host || '',
+    host:        raw.host         || '',
     meetingLink: raw.meeting_link || '',
-    tags,
+    membership:  raw.membership   || '',
+    cohort:      raw.cohort       || '',
   };
 }
 
@@ -123,7 +126,6 @@ async function loadSchedule(accessToken) {
       rawRows = await fetchFallback();
     }
   } else {
-    // No token yet, or placeholder ID — use fallback data
     if (SHEET_ID === 'YOUR_SPREADSHEET_ID') {
       console.info('[schedule] SHEET_ID not configured — using fallback data');
     }
@@ -131,8 +133,9 @@ async function loadSchedule(accessToken) {
   }
 
   const sessions = rawRows
+    .filter(row => (row.display_schedule || '').trim().toLowerCase() === 'yes')
     .map(normalizeSession)
-    .filter(Boolean) // remove nulls from malformed rows
+    .filter(Boolean)
     .sort((a, b) => a.startUTC - b.startUTC);
 
   return sessions;
