@@ -18,7 +18,7 @@
    RANGE should cover all data columns (A through L).
 ──────────────────────────────────────────────────────────── */
 const SHEET_ID = '1CCk6c6cWwquCp7fEIqFXPkpRiyo_L4VkzREy0J1jD5o';
-const SHEET_RANGE = 'Event Calendar!A:J';
+const SHEET_RANGE = 'New_Event_Calendar!A:Z';
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 const FALLBACK_URL = 'data/schedule.json';
 
