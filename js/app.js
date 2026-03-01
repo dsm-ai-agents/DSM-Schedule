@@ -15,14 +15,33 @@
 'use strict';
 
 /* ── Configuration ────────────────────────────────────────────
-   Replace GOOGLE_CLIENT_ID with your actual OAuth client ID.
-   The client_id is safe to commit — it is a public identifier.
-   The client_secret is NEVER used or stored in browser code.
+   GOOGLE_CLIENT_ID:     OAuth 2.0 client ID — safe to commit.
+   GOOGLE_CLIENT_SECRET: Loaded at runtime from js/config.js,
+                         which is gitignored and auto-generated.
+                         Local:  copy .env.example → .env, fill in
+                                 GOOGLE_CLIENT_SECRET, then run:
+                                 node generate-config.js
+                         Vercel: set GOOGLE_CLIENT_SECRET in
+                                 Project Settings → Environment Variables.
+   REDIRECT_URIS:        Must exactly match "Authorized redirect URIs"
+                         registered in Google Cloud Console for this
+                         OAuth client.
 ──────────────────────────────────────────────────────────── */
-const GOOGLE_CLIENT_ID = '1073582681335-g4n3hl2pl6v0sb83u1hq4bm1i1kjj7o6.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID     = '1073582681335-g4n3hl2pl6v0sb83u1hq4bm1i1kjj7o6.apps.googleusercontent.com';
+const GOOGLE_CLIENT_SECRET = (window.APP_CONFIG && window.APP_CONFIG.googleClientSecret) || '';
 
-// OAuth scope for reading Google Sheets
-const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+const REDIRECT_URIS = [
+  'http://localhost:3000',
+  'https://dsm-schedule.vercel.app',   // update once your Vercel URL is confirmed
+];
+
+// Scopes: identity (openid/profile/email) + read-only Sheets access
+const OAUTH_SCOPES = [
+  'openid',
+  'profile',
+  'email',
+  'https://www.googleapis.com/auth/spreadsheets.readonly',
+].join(' ');
 
 /* ── AppState ─────────────────────────────────────────────────
    Single source of truth for runtime state.
@@ -220,91 +239,142 @@ function refreshAllTimezoneDisplays() {
   refreshCalendar();
 }
 
-/* ── Google Sign-In (Step 1: identity) ───────────────────────── */
-function initGoogleSignIn() {
-  // If the GIS library hasn't loaded yet, retry after a short delay
-  if (typeof google === 'undefined' || !google.accounts) {
-    setTimeout(initGoogleSignIn, 300);
-    return;
-  }
+/* ── PKCE helpers ─────────────────────────────────────────────── */
 
-  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
-    // No client ID configured — skip Google Sign-In and use fallback
-    console.warn('[app] GOOGLE_CLIENT_ID not configured — bypassing sign-in');
-    showSignInBypass();
-    return;
-  }
-
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback:  handleCredentialResponse,
-    auto_select: false,
-  });
-
-  google.accounts.id.renderButton(
-    document.getElementById('g-signin-btn'),
-    {
-      theme: 'filled_blue',
-      size:  'large',
-      width: 280,
-      text:  'signin_with',
-    }
-  );
+function getCurrentRedirectUri() {
+  const origin = window.location.origin;
+  return REDIRECT_URIS.find(uri => uri.startsWith(origin)) || REDIRECT_URIS[0];
 }
 
-function handleCredentialResponse(response) {
+function base64urlEncode(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function generateCodeVerifier() {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return base64urlEncode(array.buffer);
+}
+
+async function generateCodeChallenge(verifier) {
+  const encoded = new TextEncoder().encode(verifier);
+  const hash    = await crypto.subtle.digest('SHA-256', encoded);
+  return base64urlEncode(hash);
+}
+
+/* ── Google Sign-In via PKCE redirect ────────────────────────── */
+
+async function initGoogleSignIn() {
+  const btn = document.getElementById('g-signin-btn');
+  if (btn) {
+    btn.addEventListener('click', startSignIn);
+    btn.disabled = false;
+  }
+}
+
+async function startSignIn() {
+  const btn = document.getElementById('g-signin-btn');
+  if (btn) btn.disabled = true;
+
+  const verifier   = generateCodeVerifier();
+  const challenge  = await generateCodeChallenge(verifier);
+  const state      = crypto.randomUUID();
+
+  sessionStorage.setItem('pkce_verifier', verifier);
+  sessionStorage.setItem('oauth_state',   state);
+
+  const params = new URLSearchParams({
+    client_id:             GOOGLE_CLIENT_ID,
+    redirect_uri:          getCurrentRedirectUri(),
+    response_type:         'code',
+    scope:                 OAUTH_SCOPES,
+    code_challenge:        challenge,
+    code_challenge_method: 'S256',
+    state:                 state,
+    access_type:           'online',
+    prompt:                'select_account',
+  });
+
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+/* ── OAuth callback handler (runs on page load if ?code= present) */
+
+async function handleOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('code');
+  const state  = params.get('state');
+  const error  = params.get('error');
+
+  if (error) {
+    // Clean URL before showing error
+    window.history.replaceState({}, '', window.location.pathname);
+    showLoginError(`Sign-in failed: ${error}`);
+    return false;
+  }
+
+  if (!code) return false;
+
+  // Verify state to prevent CSRF
+  const savedState = sessionStorage.getItem('oauth_state');
+  if (state !== savedState) {
+    window.history.replaceState({}, '', window.location.pathname);
+    showLoginError('Security check failed. Please try again.');
+    return false;
+  }
+
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  sessionStorage.removeItem('pkce_verifier');
+  sessionStorage.removeItem('oauth_state');
+
+  // Clean the ?code= from the URL before any async work
+  window.history.replaceState({}, '', window.location.pathname);
+
+  // Exchange authorization code for tokens
+  let tokens;
   try {
-    // Decode the JWT ID token (no signature verification needed client-side)
-    const payload = parseJwt(response.credential);
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id:     GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        code:          code,
+        code_verifier: verifier,
+        grant_type:    'authorization_code',
+        redirect_uri:  getCurrentRedirectUri(),
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error_description || err.error || `HTTP ${res.status}`);
+    }
+
+    tokens = await res.json();
+  } catch (err) {
+    showLoginError(`Token exchange failed: ${err.message}`);
+    console.error('[app] Token exchange error:', err);
+    return false;
+  }
+
+  // Decode the ID token JWT for user profile
+  try {
+    const payload = parseJwt(tokens.id_token);
     AppState.user.name    = payload.name    || payload.email || 'User';
     AppState.user.email   = payload.email   || '';
     AppState.user.picture = payload.picture || '';
-
-    // Persist user info
-    sessionStorage.setItem('dsm_user', JSON.stringify(AppState.user));
-
-    // Step 2: Request Sheets API access token
-    requestSheetsToken();
-  } catch (err) {
-    showLoginError('Sign-in failed. Please try again.');
-    console.error('[app] handleCredentialResponse error:', err);
+  } catch {
+    AppState.user.name  = 'User';
+    AppState.user.email = '';
   }
-}
 
-/* ── Google OAuth Token Client (Step 2: Sheets access) ──────── */
-let tokenClient = null;
+  AppState.accessToken = tokens.access_token;
+  sessionStorage.setItem('dsm_user',  JSON.stringify(AppState.user));
+  sessionStorage.setItem('dsm_token', tokens.access_token);
 
-function initTokenClient() {
-  if (typeof google === 'undefined') return;
-
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope:     SHEETS_SCOPE,
-    callback:  handleTokenResponse,
-  });
-}
-
-function requestSheetsToken() {
-  if (!tokenClient) {
-    initTokenClient();
-  }
-  if (tokenClient) {
-    tokenClient.requestAccessToken({ prompt: 'none' });
-  } else {
-    // Can't get token — proceed without Sheets API (fallback data)
-    showApp(null);
-  }
-}
-
-function handleTokenResponse(tokenResponse) {
-  if (tokenResponse.error) {
-    console.warn('[app] Token error:', tokenResponse.error, '— using fallback data');
-    showApp(null);
-    return;
-  }
-  AppState.accessToken = tokenResponse.access_token;
-  sessionStorage.setItem('dsm_token', tokenResponse.access_token);
-  showApp(tokenResponse.access_token);
+  return true;
 }
 
 /* ── Sign-out ─────────────────────────────────────────────────── */
@@ -320,10 +390,6 @@ function signOut() {
   if (clockInterval) {
     clearInterval(clockInterval);
     clockInterval = null;
-  }
-
-  if (typeof google !== 'undefined' && google.accounts) {
-    google.accounts.id.disableAutoSelect();
   }
 
   document.getElementById('app').classList.add('hidden');
@@ -414,7 +480,7 @@ function showLoginError(msg) {
 }
 
 /* ── Init ─────────────────────────────────────────────────────── */
-function init() {
+async function init() {
   // Wire up tabs and in-app timezone switcher
   initTabs();
   initTimezoneSwitcher();
@@ -444,7 +510,16 @@ function init() {
   // First visit — pre-detect timezone for login page context
   AppState.timezone = detectTimezone();
 
-  // Initialize Google Sign-In
+  // Check if this is the OAuth redirect callback (URL has ?code=)
+  if (window.location.search.includes('code=')) {
+    const ok = await handleOAuthCallback();
+    if (ok) {
+      showApp(AppState.accessToken);
+      return;
+    }
+  }
+
+  // Wire up the sign-in button
   initGoogleSignIn();
 }
 

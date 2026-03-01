@@ -1,1 +1,5 @@
 data/Schedule_Data_1MAR2026.xlsx
+
+# Local secrets — never commit these
+.env
+js/config.js

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": null,
+  "buildCommand": "node generate-config.js",
   "outputDirectory": ".",
   "routes": [
     {
