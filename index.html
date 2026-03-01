@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSM 2026 Schedule</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async></script>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       LOGIN SCREEN
+       Shown on first visit. Hidden after Google Sign-In.
+  ═══════════════════════════════════════════════════════ -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <span class="logo-badge">DSM</span>
+        <span class="logo-year">2026</span>
+      </div>
+      <h1 class="login-title">Program Schedule</h1>
+      <p class="login-subtitle">Sign in with your Google account to access the DSM 2026 session schedule.</p>
+
+      <!-- Google Sign-In button rendered here by GIS library -->
+      <div id="g-signin-btn" class="g-signin-container"></div>
+
+      <p class="login-note">
+        Your timezone will be automatically detected.
+        You can change it after signing in.
+      </p>
+
+      <div id="login-error" class="login-error hidden"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MAIN APPLICATION
+       Hidden until sign-in complete. Two-panel layout.
+  ═══════════════════════════════════════════════════════ -->
+  <div id="app" class="app-layout hidden">
+
+    <!-- ─── LEFT PANEL ─────────────────────────────────── -->
+    <aside id="left-panel" class="left-panel">
+
+      <!-- Left panel header -->
+      <div class="left-header">
+        <div class="left-logo">
+          <span class="logo-badge sm">DSM</span>
+          <span class="logo-year sm">2026</span>
+        </div>
+        <div class="user-chip" id="user-chip">
+          <img id="user-avatar" class="user-avatar" src="" alt="" aria-hidden="true">
+          <span id="user-name-short"></span>
+        </div>
+      </div>
+
+      <!-- Tab navigation -->
+      <nav class="tab-nav" role="tablist">
+        <button class="tab-btn active" data-tab="how-it-works" role="tab" aria-selected="true">
+          How It Works
+        </button>
+        <button class="tab-btn" data-tab="upcoming" role="tab" aria-selected="false">
+          Upcoming
+        </button>
+        <button class="tab-btn" data-tab="archive" role="tab" aria-selected="false">
+          Archive
+        </button>
+      </nav>
+
+      <!-- Tab: How It Works -->
+      <div id="tab-how-it-works" class="tab-content active" role="tabpanel">
+        <div class="tab-inner">
+          <h2 class="tab-heading">How DSM Works</h2>
+          <p class="tab-text">
+            DSM 2026 is a cohort-based program for practitioners building with AI. Each month we host a live session
+            covering a core topic — from agent deployment to evaluation and multi-agent systems.
+          </p>
+          <p class="tab-text">
+            Sessions run for 90 minutes and include a presentation, live demonstration, and Q&A. All times shown
+            reflect your selected timezone.
+          </p>
+          <div class="how-it-works-steps">
+            <div class="step">
+              <span class="step-num">1</span>
+              <div>
+                <strong>Monthly Sessions</strong>
+                <p>One live session per month, typically the second Sunday at 14:00 UTC.</p>
+              </div>
+            </div>
+            <div class="step">
+              <span class="step-num">2</span>
+              <div>
+                <strong>Pre-session Reading</strong>
+                <p>Each session has prerequisite materials shared one week in advance.</p>
+              </div>
+            </div>
+            <div class="step">
+              <span class="step-num">3</span>
+              <div>
+                <strong>Recordings</strong>
+                <p>All sessions are recorded and made available to cohort members within 48 hours.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="calendar-label">Session Calendar</h3>
+          <div id="monthly-calendar" class="monthly-calendar"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Upcoming Sessions -->
+      <div id="tab-upcoming" class="tab-content hidden" role="tabpanel">
+        <div class="tab-inner">
+          <h2 class="tab-heading">Upcoming Sessions</h2>
+          <p class="tab-text muted" id="upcoming-empty" style="display:none">No upcoming sessions scheduled.</p>
+          <ul id="upcoming-list" class="session-list"></ul>
+        </div>
+      </div>
+
+      <!-- Tab: Archive -->
+      <div id="tab-archive" class="tab-content hidden" role="tabpanel">
+        <div class="tab-inner">
+          <h2 class="tab-heading">Past Sessions</h2>
+          <p class="tab-text muted" id="archive-empty" style="display:none">No past sessions yet.</p>
+          <ul id="archive-list" class="session-list"></ul>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ─── RIGHT PANEL ────────────────────────────────── -->
+    <main id="right-panel" class="right-panel">
+
+      <!-- Top bar: clock + timezone control -->
+      <header class="right-header">
+        <div class="clock-block">
+          <div id="live-date" class="live-date"></div>
+          <div id="live-time" class="live-time">00:00:00</div>
+        </div>
+        <div class="header-controls">
+          <label class="tz-label" for="tz-switcher">Timezone</label>
+          <select id="tz-switcher" class="tz-select"></select>
+          <button id="sign-out-btn" class="sign-out-btn" title="Sign out">↩ Sign out</button>
+        </div>
+      </header>
+
+      <!-- Session detail card -->
+      <section id="session-detail" class="session-detail">
+
+        <!-- Loading state -->
+        <div id="session-loading" class="session-loading">
+          <div class="spinner"></div>
+          <p>Loading schedule…</p>
+        </div>
+
+        <!-- Session content (hidden while loading) -->
+        <div id="session-content" class="hidden">
+          <div class="session-meta-top">
+            <span id="session-status-badge" class="status-badge"></span>
+            <span id="session-tags" class="session-tags"></span>
+          </div>
+
+          <h1 id="session-topic" class="session-topic">—</h1>
+          <p id="session-description" class="session-description"></p>
+
+          <ul id="session-bullets" class="session-bullets"></ul>
+
+          <div class="session-info-grid">
+            <div class="info-row">
+              <span class="info-label">Date</span>
+              <span id="info-date" class="info-value"></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Time</span>
+              <span id="info-time" class="info-value"></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Duration</span>
+              <span id="info-duration" class="info-value"></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Host</span>
+              <span id="info-host" class="info-value"></span>
+            </div>
+          </div>
+
+          <div id="session-cta" class="session-cta hidden">
+            <a id="meeting-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-join">
+              Join Session →
+            </a>
+          </div>
+        </div>
+
+        <!-- Empty state (no sessions at all) -->
+        <div id="session-empty" class="session-empty hidden">
+          <p>No sessions found. Please check back later.</p>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Scripts: dependency order matters -->
+  <script src="js/schedule.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

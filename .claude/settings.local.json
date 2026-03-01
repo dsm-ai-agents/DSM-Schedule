@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:/Users/USER/Documents/DSM 2026/DSM Schedule\" remote -v)",
+      "Bash(git -C \"C:/Users/USER/Documents/DSM 2026/DSM Schedule\" branch -a)"
+    ]
+  }
+}

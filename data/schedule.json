@@ -1,0 +1,60 @@
+{
+  "sessions": [
+    {
+      "date": "2026-03-15",
+      "time_utc": "14:00",
+      "duration_min": "90",
+      "topic": "AI Agents in Production",
+      "description": "An introduction to deploying AI agents in real-world environments, covering architecture patterns, reliability, and observability.",
+      "bullet_1": "Who should attend: All DSM 2026 track participants",
+      "bullet_2": "Key takeaway: Agent deployment patterns and common failure modes",
+      "bullet_3": "Prerequisite: Completion of Module 2 reading materials",
+      "bullet_4": "Format: Live demo followed by Q&A",
+      "host": "DSM Faculty",
+      "meeting_link": "https://zoom.us/j/placeholder",
+      "tags": "agents,deployment,production"
+    },
+    {
+      "date": "2026-04-12",
+      "time_utc": "14:00",
+      "duration_min": "90",
+      "topic": "Evaluating LLM Outputs at Scale",
+      "description": "How to build robust evaluation pipelines for large language model applications, from unit evals to production monitoring.",
+      "bullet_1": "Who should attend: Engineers and product leads working with LLMs",
+      "bullet_2": "Key takeaway: Building automated eval harnesses for LLM apps",
+      "bullet_3": "Prerequisite: Familiarity with LLM APIs (OpenAI, Anthropic, or similar)",
+      "bullet_4": "Format: Workshop with hands-on exercises",
+      "host": "DSM Faculty",
+      "meeting_link": "https://zoom.us/j/placeholder",
+      "tags": "evaluation,llm,testing"
+    },
+    {
+      "date": "2026-05-10",
+      "time_utc": "14:00",
+      "duration_min": "90",
+      "topic": "Multi-Agent Systems and Orchestration",
+      "description": "Designing systems where multiple AI agents collaborate on complex tasks. Covers coordination patterns, message passing, and failure handling.",
+      "bullet_1": "Who should attend: All participants with Module 3 complete",
+      "bullet_2": "Key takeaway: Orchestration patterns for reliable multi-agent pipelines",
+      "bullet_3": "Prerequisite: Session 1 (AI Agents in Production) or equivalent experience",
+      "bullet_4": "Format: Case study presentations + panel discussion",
+      "host": "DSM Faculty",
+      "meeting_link": "https://zoom.us/j/placeholder",
+      "tags": "multi-agent,orchestration,systems"
+    },
+    {
+      "date": "2026-02-08",
+      "time_utc": "14:00",
+      "duration_min": "90",
+      "topic": "Program Kickoff: DSM 2026 Overview",
+      "description": "Welcome to DSM 2026. This session introduces the program structure, cohort members, faculty, and what to expect over the coming months.",
+      "bullet_1": "Who should attend: All accepted DSM 2026 participants",
+      "bullet_2": "Key takeaway: Program roadmap, expectations, and how to get the most from DSM",
+      "bullet_3": "Prerequisite: None — this is the first session",
+      "bullet_4": "Format: Presentations, introductions, live Q&A",
+      "host": "DSM Faculty",
+      "meeting_link": "https://zoom.us/j/placeholder",
+      "tags": "kickoff,orientation,cohort"
+    }
+  ]
+}
